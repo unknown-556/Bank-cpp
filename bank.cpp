@@ -9,51 +9,46 @@
 #include <memory>
 #include <functional>
 
-// Structure to hold transaction details
+
 struct Transaction {
-    std::string type; // "Deposit" or "Withdrawal"
+    std::string type; 
     double amount;
     std::string date;
 };
 
-// Class representing a bank account
+
 class Account {
 private:
     std::string accountNumber;
     std::string ownerName;
     double balance;
-    size_t pinHash; // Hashed PIN for authentication
+    size_t pinHash; 
     std::vector<Transaction> transactions;
 
 public:
-    // Constructor
     Account(const std::string& accNum, const std::string& name, double initialDeposit, size_t hashedPin)
         : accountNumber(accNum), ownerName(name), balance(initialDeposit), pinHash(hashedPin) {}
 
-    // Getters
+
     std::string getAccountNumber() const { return accountNumber; }
     std::string getOwnerName() const { return ownerName; }
     double getBalance() const { return balance; }
     size_t getPinHash() const { return pinHash; }
 
-    // Authentication
     bool authenticate(const std::string& enteredPin) const {
         size_t enteredPinHash = std::hash<std::string>{}(enteredPin);
         return pinHash == enteredPinHash;
     }
 
-    // Deposit funds
     void deposit(double amount) {
         balance += amount;
         Transaction txn = { "Deposit", amount, getCurrentDateTime() };
         transactions.push_back(txn);
-        // Save transaction to file
         saveTransaction(txn);
         std::cout << std::fixed << std::setprecision(2);
         std::cout << "Deposited $" << amount << " successfully.\n";
     }
 
-    // Withdraw funds
     bool withdraw(double amount) {
         if (amount > balance) {
             std::cout << "Insufficient funds. Withdrawal failed.\n";
@@ -62,14 +57,12 @@ public:
         balance -= amount;
         Transaction txn = { "Withdrawal", amount, getCurrentDateTime() };
         transactions.push_back(txn);
-        // Save transaction to file
         saveTransaction(txn);
         std::cout << std::fixed << std::setprecision(2);
         std::cout << "Withdrew $" << amount << " successfully.\n";
         return true;
     }
 
-    // View transaction history
     void viewTransactions() const {
         if (transactions.empty()) {
             std::cout << "No transactions found.\n";
@@ -82,11 +75,9 @@ public:
         }
     }
 
-    // Load transactions from file
     void loadTransactions(const std::string& transactionsFile) {
         std::ifstream txnFile(transactionsFile);
         if (!txnFile) {
-            // No transactions found
             return;
         }
 
@@ -96,7 +87,7 @@ public:
             std::stringstream ss(line);
             std::string txnAccNum, type, amountStr, date;
             std::getline(ss, txnAccNum, ',');
-            if (txnAccNum != accountNumber) continue; // Skip other accounts
+            if (txnAccNum != accountNumber) continue; 
             std::getline(ss, type, ',');
             std::getline(ss, amountStr, ',');
             std::getline(ss, date, ',');
@@ -116,28 +107,23 @@ public:
         txnFile.close();
     }
 
-    // Save account data to file
     void saveToFile(const std::string& accountsFile) const {
         std::ofstream outFile(accountsFile, std::ios::app);
         if (!outFile) {
             std::cerr << "Error opening accounts file for writing.\n";
             return;
         }
-        // Write account details separated by commas
         outFile << accountNumber << "," << ownerName << "," 
                 << std::fixed << std::setprecision(2) << balance << "," 
                 << pinHash << "\n";
         outFile.close();
     }
 
-    // Add a transaction directly (used for initial deposit)
     void addTransaction(const Transaction& txn) {
         transactions.push_back(txn);
-        // Save transaction to file
         saveTransaction(txn);
     }
 
-    // Static method to get current date and time as string
     static std::string getCurrentDateTime() {
         std::time_t now = std::time(nullptr);
         std::tm* ltm = std::localtime(&now);
@@ -152,7 +138,6 @@ public:
     }
 
 private:
-    // Save a single transaction to transactions file
     void saveTransaction(const Transaction& txn) const {
         std::ofstream txnFile("transactions.txt", std::ios::app);
         if (!txnFile) {
@@ -166,10 +151,9 @@ private:
     }
 };
 
-// Function to generate a unique account number
 std::string generateAccountNumber() {
     std::ifstream inFile("account_number.txt");
-    int lastNumber = 1000; // Starting account number
+    int lastNumber = 1000; 
     if (inFile) {
         inFile >> lastNumber;
         inFile.close();
@@ -180,7 +164,7 @@ std::string generateAccountNumber() {
     std::ofstream outFile("account_number.txt", std::ios::trunc);
     if (!outFile) {
         std::cerr << "Error opening account number file for writing.\n";
-        return std::to_string(newNumber); // Return incremented number even if file write fails
+        return std::to_string(newNumber); 
     }
     outFile << newNumber;
     outFile.close();
@@ -188,7 +172,6 @@ std::string generateAccountNumber() {
     return std::to_string(newNumber);
 }
 
-// Function to update an account's details in the accounts file
 bool updateAccountInFile(const std::string& accountsFile, const Account& account) {
     std::ifstream inFile(accountsFile);
     if (!inFile) {
@@ -200,7 +183,6 @@ bool updateAccountInFile(const std::string& accountsFile, const Account& account
     std::string line;
     std::string targetAccNum = account.getAccountNumber();
 
-    // Read all lines and modify the line corresponding to the account
     while (std::getline(inFile, line)) {
         if (line.empty()) {
             lines.push_back(line);
@@ -212,7 +194,6 @@ bool updateAccountInFile(const std::string& accountsFile, const Account& account
         std::getline(ss, accNumber, ',');
 
         if (accNumber == targetAccNum) {
-            // Replace this line with updated account details
             std::stringstream newLine;
             newLine << account.getAccountNumber() << "," 
                     << account.getOwnerName() << ","
@@ -226,7 +207,6 @@ bool updateAccountInFile(const std::string& accountsFile, const Account& account
     }
     inFile.close();
 
-    // Write all lines back to the file
     std::ofstream outFile(accountsFile, std::ios::trunc);
     if (!outFile) {
         std::cerr << "Error opening accounts file for writing.\n";
@@ -241,7 +221,6 @@ bool updateAccountInFile(const std::string& accountsFile, const Account& account
     return true;
 }
 
-// Function to create a new account
 void createAccount(const std::string& accountsFile) {
     std::string name, pin;
     double initialDeposit;
@@ -256,7 +235,6 @@ void createAccount(const std::string& accountsFile) {
     std::cout << "Set a 4-digit PIN: ";
     std::getline(std::cin, pin);
 
-    // Simple PIN validation
     if (pin.length() != 4 || !std::all_of(pin.begin(), pin.end(), ::isdigit)) {
         std::cout << "Invalid PIN format. Account creation failed.\n";
         return;
@@ -264,7 +242,7 @@ void createAccount(const std::string& accountsFile) {
 
     std::cout << "Enter initial deposit amount: $";
     std::cin >> initialDeposit;
-    std::cin.ignore(); // Ignore the newline after the number
+    std::cin.ignore();
 
     if (initialDeposit < 0) {
         std::cout << "Initial deposit cannot be negative. Account creation failed.\n";
@@ -274,11 +252,9 @@ void createAccount(const std::string& accountsFile) {
     std::string accNum = generateAccountNumber();
     size_t hashedPin = std::hash<std::string>{}(pin);
 
-    // Create new account
     Account newAccount(accNum, name, initialDeposit, hashedPin);
     newAccount.saveToFile(accountsFile);
 
-    // Save the initial deposit as a transaction
     Transaction initialTxn = { "Deposit", initialDeposit, Account::getCurrentDateTime() };
     newAccount.addTransaction(initialTxn);
 
@@ -286,7 +262,6 @@ void createAccount(const std::string& accountsFile) {
     std::cout << "Your Account Number: " << accNum << "\n";
 }
 
-// Function to login to an existing account
 std::unique_ptr<Account> login(const std::string& accountsFile) {
     std::string accNum, enteredPin;
     std::cout << "Enter your Account Number: ";
@@ -332,17 +307,14 @@ std::unique_ptr<Account> login(const std::string& accountsFile) {
                 storedPinHash = 0;
             }
 
-            // Create temporary Account object to check authentication
             Account tempAccount(accNumber, owner, balance, storedPinHash);
             if (tempAccount.authenticate(enteredPin)) {
                 foundAccount = std::make_unique<Account>(accNumber, owner, balance, storedPinHash);
-                // Load transactions
                 foundAccount->loadTransactions("transactions.txt");
                 std::cout << "Login successful. Welcome, " << foundAccount->getOwnerName() << "!\n";
                 break;
             }
             else {
-                // PIN mismatch
                 break;
             }
         }
@@ -361,14 +333,13 @@ int main() {
     int choice;
 
     while (true) {
-        // Display main menu
         std::cout << "\n===== Simple Banking System =====\n";
         std::cout << "1. Create Account\n";
         std::cout << "2. Login to Account\n";
         std::cout << "3. Exit\n";
         std::cout << "Enter your choice (1-3): ";
         std::cin >> choice;
-        std::cin.ignore(); // Ignore the newline after the number
+        std::cin.ignore();
 
         switch (choice) {
             case 1:
@@ -377,7 +348,6 @@ int main() {
             case 2: {
                 std::unique_ptr<Account> account = login(accountsFile);
                 if (account) {
-                    // User is logged in
                     int subChoice;
                     while (true) {
                         std::cout << "\n===== Account Menu =====\n";
@@ -388,37 +358,36 @@ int main() {
                         std::cout << "5. Logout\n";
                         std::cout << "Enter your choice (1-5): ";
                         std::cin >> subChoice;
-                        std::cin.ignore(); // Ignore the newline after the number
+                        std::cin.ignore(); 
 
                         switch (subChoice) {
-                            case 1: { // Deposit
+                            case 1: { 
                                 double amount;
                                 std::cout << "Enter amount to deposit: $";
                                 std::cin >> amount;
-                                std::cin.ignore(); // Ignore the newline after the number
+                                std::cin.ignore();
                                 if (amount <= 0) {
                                     std::cout << "Invalid amount. Please enter a positive value.\n";
                                 }
                                 else {
                                     account->deposit(amount);
-                                    // Update the account in accounts.txt
+
                                     if (!updateAccountInFile(accountsFile, *account)) {
                                         std::cout << "Error updating account data.\n";
                                     }
                                 }
                                 break;
                             }
-                            case 2: { // Withdraw
+                            case 2: { 
                                 double amount;
                                 std::cout << "Enter amount to withdraw: $";
                                 std::cin >> amount;
-                                std::cin.ignore(); // Ignore the newline after the number
+                                std::cin.ignore(); 
                                 if (amount <= 0) {
                                     std::cout << "Invalid amount. Please enter a positive value.\n";
                                 }
                                 else {
                                     if (account->withdraw(amount)) {
-                                        // Update the account in accounts.txt
                                         if (!updateAccountInFile(accountsFile, *account)) {
                                             std::cout << "Error updating account data.\n";
                                         }
@@ -434,7 +403,6 @@ int main() {
                                 account->viewTransactions();
                                 break;
                             case 5:
-                                // Save account data before logout
                                 account->saveToFile(accountsFile);
                                 std::cout << "Logged out successfully.\n";
                                 account.reset();
